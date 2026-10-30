@@ -1,0 +1,180 @@
+<Page
+    x:Class="SCQ30Mobile.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Black">
+
+    <!-- Windows Phone 8.1 look: black canvas, big light lowercase pivot headers, outlined buttons, accent section titles. -->
+    <Page.Resources>
+        <Style x:Key="Head" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="Foreground" Value="{ThemeResource SystemControlHighlightAccentBrush}" />
+            <Setter Property="Margin" Value="0,18,0,4" />
+        </Style>
+        <Style x:Key="Dim" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FF999999" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="Big" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI Light" />
+            <Setter Property="FontSize" Value="32" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="Accent" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="White" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="MinHeight" Value="48" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Margin" Value="0,12,0,0" />
+        </Style>
+        <Style TargetType="PivotItem">
+            <Setter Property="Margin" Value="7,0,7,0" />
+        </Style>
+    </Page.Resources>
+
+    <Pivot Title="OPENSCQ30">
+        <Pivot.TitleTemplate>
+            <DataTemplate>
+                <TextBlock Text="{Binding}" FontSize="15" FontWeight="SemiBold" Margin="0,6,0,0" />
+            </DataTemplate>
+        </Pivot.TitleTemplate>
+        <Pivot.HeaderTemplate>
+            <DataTemplate>
+                <TextBlock Text="{Binding}" FontFamily="Segoe UI Light" FontSize="44" />
+            </DataTemplate>
+        </Pivot.HeaderTemplate>
+
+        <PivotItem Header="device">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Button x:Name="ScanButton" Content="scan paired devices" Style="{StaticResource Accent}" Margin="0,0,0,8" Click="Scan_Click" />
+                <ListView x:Name="DeviceList" Grid.Row="1" SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" FontFamily="Segoe UI Light" FontSize="26" Margin="0,6" />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <StackPanel Grid.Row="2" Margin="0,8,0,12">
+                    <Button x:Name="ConnectButton" Content="connect" Style="{StaticResource Accent}" Margin="0,0,0,8" Click="Connect_Click" />
+                    <TextBlock x:Name="StatusText" Text="pair the device in Settings first" Style="{StaticResource Dim}" />
+                </StackPanel>
+            </Grid>
+        </PivotItem>
+
+        <PivotItem Header="status">
+            <ScrollViewer>
+                <StackPanel>
+                    <TextBlock Text="battery" Style="{StaticResource Head}" Margin="0,0,0,4" />
+                    <TextBlock x:Name="BatteryText" Style="{StaticResource Big}" Text="–" />
+                    <TextBlock Text="firmware" Style="{StaticResource Head}" />
+                    <TextBlock x:Name="FirmwareText" Style="{StaticResource Dim}" Text="–" />
+                    <TextBlock Text="serial" Style="{StaticResource Head}" />
+                    <TextBlock x:Name="SerialText" Style="{StaticResource Dim}" Text="–" />
+                    <TextBlock Text="connection" Style="{StaticResource Head}" />
+                    <TextBlock x:Name="TwsText" Style="{StaticResource Dim}" Text="–" />
+                    <TextBlock Text="noise" Style="{StaticResource Head}" />
+                    <TextBlock x:Name="NcSummaryText" Style="{StaticResource Dim}" Text="–" />
+                    <Button Content="refresh" Style="{StaticResource Accent}" Click="Refresh_Click" />
+                </StackPanel>
+            </ScrollViewer>
+        </PivotItem>
+
+        <PivotItem Header="sound">
+            <ScrollViewer>
+                <StackPanel>
+                    <TextBlock Text="ambient sound mode" Style="{StaticResource Head}" Margin="0,0,0,4" />
+                    <ComboBox x:Name="AmbientBox" HorizontalAlignment="Stretch" />
+                    <TextBlock Text="noise canceling mode" Style="{StaticResource Head}" />
+                    <ComboBox x:Name="NcModeBox" HorizontalAlignment="Stretch" />
+                    <TextBlock x:Name="ManualLabel" Text="manual strength" Style="{StaticResource Head}" />
+                    <Slider x:Name="ManualSlider" Minimum="1" Maximum="5" StepFrequency="1" TickFrequency="1" TickPlacement="Outside" />
+                    <TextBlock x:Name="AdaptiveInfo" Style="{StaticResource Dim}" Text="adaptive level –" />
+                    <TextBlock Text="adaptive sensitivity" Style="{StaticResource Head}" />
+                    <Slider x:Name="SensSlider" Minimum="0" Maximum="10" StepFrequency="1" TickFrequency="1" TickPlacement="Outside" />
+                    <TextBlock Text="multi-scene" Style="{StaticResource Head}" />
+                    <ComboBox x:Name="SceneBox" HorizontalAlignment="Stretch" />
+                    <TextBlock Text="wind noise" Style="{StaticResource Head}" />
+                    <ToggleSwitch x:Name="WindToggle" Header="suppression" />
+                    <TextBlock x:Name="WindInfo" Style="{StaticResource Dim}" Text="wind detected –" />
+                    <Button Content="apply" Style="{StaticResource Accent}" Margin="0,16,0,12" Click="ApplySound_Click" />
+                </StackPanel>
+            </ScrollViewer>
+        </PivotItem>
+
+        <PivotItem Header="eq">
+            <ScrollViewer>
+                <StackPanel>
+                    <TextBlock Text="preset" Style="{StaticResource Head}" Margin="0,0,0,4" />
+                    <ComboBox x:Name="EqPresetBox" HorizontalAlignment="Stretch" SelectionChanged="EqPreset_Changed" />
+                    <StackPanel x:Name="EqPanel" Margin="0,12,0,0" />
+                    <Button Content="apply" Style="{StaticResource Accent}" Margin="0,16,0,12" Click="ApplyEq_Click" />
+                </StackPanel>
+            </ScrollViewer>
+        </PivotItem>
+
+        <PivotItem Header="buttons">
+            <ScrollViewer>
+                <StackPanel>
+                    <StackPanel x:Name="ButtonsPanel" />
+                    <Button Content="reset to default" Style="{StaticResource Accent}" Margin="0,16,0,12" Click="ResetButtons_Click" />
+                </StackPanel>
+            </ScrollViewer>
+        </PivotItem>
+
+        <PivotItem Header="more">
+            <ScrollViewer>
+                <StackPanel>
+                    <ToggleSwitch x:Name="TouchToggle" Header="touch tone" Toggled="Touch_Toggled" />
+                    <ToggleSwitch x:Name="SurroundToggle" Header="surround sound" Toggled="Surround_Toggled" />
+                    <ToggleSwitch x:Name="GamingToggle" Header="gaming mode" Toggled="Gaming_Toggled" />
+                    <ToggleSwitch x:Name="LowBatToggle" Header="low battery prompt" Toggled="LowBat_Toggled" />
+
+                    <TextBlock Text="auto power off" Style="{StaticResource Head}" />
+                    <ToggleSwitch x:Name="ApoToggle" Header="enabled" Toggled="Apo_Toggled" />
+                    <ComboBox x:Name="ApoBox" HorizontalAlignment="Stretch" SelectionChanged="Apo_Selected" />
+
+                    <TextBlock Text="ambient button cycle" Style="{StaticResource Head}" />
+                    <CheckBox x:Name="CycleNc" Content="noise canceling" Click="Cycle_Click" />
+                    <CheckBox x:Name="CycleTr" Content="transparency" Click="Cycle_Click" />
+                    <CheckBox x:Name="CycleNormal" Content="normal" Click="Cycle_Click" />
+
+                    <TextBlock Text="dual connections" Style="{StaticResource Head}" />
+                    <ToggleSwitch x:Name="DualToggle" Header="enabled" Toggled="Dual_Toggled" />
+                    <StackPanel x:Name="DualPanel" Margin="0,0,0,12" />
+                </StackPanel>
+            </ScrollViewer>
+        </PivotItem>
+
+        <PivotItem Header="log">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Content="copy" Style="{StaticResource Accent}" Margin="0,0,4,0" Click="CopyLog_Click" />
+                    <Button Grid.Column="1" Content="export" Style="{StaticResource Accent}" Margin="4,0" Click="ExportLog_Click" />
+                    <Button Grid.Column="2" Content="clear" Style="{StaticResource Accent}" Margin="4,0,0,0" Click="ClearLog_Click" />
+                </Grid>
+                <ScrollViewer x:Name="LogScroll" Grid.Row="1">
+                    <TextBlock x:Name="LogText" FontFamily="Consolas" FontSize="11" Foreground="#FF999999"
+                               TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                </ScrollViewer>
+            </Grid>
+        </PivotItem>
+    </Pivot>
+</Page>
