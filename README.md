@@ -15,11 +15,12 @@ Target: Windows 10 build 10240 or newer. Developed for a Lumia 950 on build 1525
 
 ### Supported Devices
 
-Only one model is supported so far. Other models in the original project use different packet layouts and are not implemented.
+Two models are supported. The model is detected from the serial number, and the app hides settings the model does not have. Other models in the original project use different packet layouts and are not implemented.
 
-| Model | Name                     |
-| ----- | ------------------------ |
-| A3959 | Soundcore P30i / R50i NC |
+| Model | Name                         | Status                                                                 |
+| ----- | ---------------------------- | ---------------------------------------------------------------------- |
+| A3959 | Soundcore P30i / R50i NC     | Working on real hardware                                               |
+| A3949 | Soundcore P20i / P25i / R50i | Untested. Parser checked against OpenSCQ30 test packets only. No noise canceling, no custom equalizer, 6 buttons, gaming mode and touch tone only |
 
 ### Supported Settings
 

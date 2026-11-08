@@ -32,6 +32,86 @@ namespace SCQ30Mobile
             });
             AppLog.Add("app started");
             BuildControls();
+            RestorePrefs();
+            StartSync();
+            Loaded += async (s, e) => await OnStartAsync();
+        }
+
+        readonly DispatcherTimer syncTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+
+        void StartSync()
+        {
+            syncTimer.Tick += async (s, e) =>
+            {
+                if (client == null) return;
+                try { await client.RequestStateAsync(); }
+                catch (Exception ex) { Log("sync failed: " + ex.Message); }
+            };
+            syncTimer.Start();
+        }
+
+        bool confirmSound = true;
+        bool prefsRestored;
+
+        void RestorePrefs()
+        {
+            updating = true;
+            confirmSound = Prefs.GetBool("confirmSound", true);
+            ConfirmSoundToggle.IsOn = confirmSound;
+            AutoConnectToggle.IsOn = Prefs.GetBool("autoConnect", true);
+            Root.SelectedIndex = Math.Max(0, Math.Min(Root.Items.Count - 1, Prefs.GetInt("pivot", 0)));
+            updating = false;
+            prefsRestored = true;
+        }
+
+        // Show the last known values straight away, then reconnect to the last device if allowed.
+        async Task OnStartAsync()
+        {
+            var cached = Prefs.GetString("lastState");
+            if (cached != null)
+            {
+                try
+                {
+                    var st = Protocol.ParseState(Convert.FromBase64String(cached));
+                    if (st != null)
+                    {
+                        ShowState(st);
+                        StatusText.Text = "last known values (not connected)";
+                    }
+                }
+                catch (Exception ex) { Log("cached state ignored: " + ex.Message); }
+            }
+
+            if (!AutoConnectToggle.IsOn) return;
+            var id = Prefs.GetString("lastDevice");
+            if (id == null) return;
+            Log("reconnecting to last device");
+            var entry = await SoundcoreClient.FindByIdAsync(id);
+            if (entry != null) await ConnectToAsync(entry);
+        }
+
+        void Root_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (prefsRestored) Prefs.SetString("pivot", Root.SelectedIndex.ToString());
+        }
+
+        void ConfirmSound_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (updating) return;
+            confirmSound = ConfirmSoundToggle.IsOn;
+            Prefs.SetBool("confirmSound", confirmSound);
+            if (confirmSound) Confirm(true);
+        }
+
+        void AutoConnect_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (updating) return;
+            Prefs.SetBool("autoConnect", AutoConnectToggle.IsOn);
+        }
+
+        void Confirm(bool ok)
+        {
+            if (confirmSound) { var ignore = Beep.PlayAsync(Player, ok); }
         }
 
         void BuildControls()
@@ -85,15 +165,20 @@ namespace SCQ30Mobile
         }
 
         // Runs a device command, logging failures instead of crashing the app.
-        async void Run(string what, Func<Task> action)
+        async void Run(string what, Func<Task> action, bool confirm = true)
         {
-            if (client == null) { StatusText.Text = "not connected"; return; }
+            if (client == null) { StatusText.Text = "not connected"; if (confirm) Confirm(false); return; }
             try
             {
                 await action();
                 Log(what + " sent");
+                if (confirm) Confirm(true);
             }
-            catch (Exception ex) { Log(what + " failed: " + ex.Message); }
+            catch (Exception ex)
+            {
+                Log(what + " failed: " + ex.Message);
+                if (confirm) Confirm(false);
+            }
         }
 
         // ---- log ----
@@ -145,15 +230,26 @@ namespace SCQ30Mobile
         {
             var entry = DeviceList.SelectedItem as DeviceEntry;
             if (entry == null) { await new MessageDialog("Pick a device first.").ShowAsync(); return; }
+            await ConnectToAsync(entry);
+        }
 
+        async Task ConnectToAsync(DeviceEntry entry)
+        {
             try
             {
                 if (client != null) client.Dispose();
+                Prefs.SetString("lastName", entry.Name);
                 client = new SoundcoreClient();
-                client.StateChanged += s => Ui(() => ShowState(s));
+                client.StateChanged += s => Ui(() =>
+                {
+                    ShowState(s);
+                    if (s.Raw != null) Prefs.SetString("lastState", Convert.ToBase64String(s.Raw));
+                    LiveTile.Update(s, Prefs.GetString("lastName"));
+                });
                 client.DualDevicesChanged += d => Ui(() => ShowDual(d));
                 StatusText.Text = "connecting…";
                 await client.ConnectAsync(entry);
+                Prefs.SetString("lastDevice", entry.Info.Id);
                 StatusText.Text = "connected, waiting for state";
             }
             catch (Exception ex)
@@ -165,7 +261,7 @@ namespace SCQ30Mobile
 
         void Refresh_Click(object sender, RoutedEventArgs e)
         {
-            Run("refresh", () => client.RequestStateAsync());
+            Run("refresh", () => client.RequestStateAsync(), false);
         }
 
         // ---- show state ----
@@ -175,8 +271,10 @@ namespace SCQ30Mobile
             updating = true;
             try
             {
-                BatteryText.Text = "L " + s.BatteryLeft + "/10" + (s.ChargingLeft ? "⚡" : "") +
-                                   "   R " + s.BatteryRight + "/10" + (s.ChargingRight ? "⚡" : "");
+                ApplyProfile(s.Profile);
+                ModelText.Text = s.Profile.Name + " (" + s.Profile.Model + ")";
+                BatteryText.Text = "L " + BatText(s.BatteryLeft) + (s.ChargingLeft ? "⚡" : "") +
+                                   "   R " + BatText(s.BatteryRight) + (s.ChargingRight ? "⚡" : "");
                 FirmwareText.Text = "firmware L " + s.FirmwareLeft + " · R " + s.FirmwareRight;
                 SerialText.Text = "serial " + s.Serial;
                 TwsText.Text = "tws " + (s.TwsConnected ? "connected" : "not connected");
@@ -222,6 +320,35 @@ namespace SCQ30Mobile
             finally { updating = false; }
         }
 
+        DeviceProfile profile;
+
+        static Visibility Vis(bool on)
+        {
+            return on ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        // Show only what the connected model supports.
+        void ApplyProfile(DeviceProfile p)
+        {
+            if (p == profile) return;
+            profile = p;
+
+            bool inPivot = Root.Items.Contains(SoundItem);
+            if (p.SoundModes && !inPivot) Root.Items.Insert(Math.Min(2, Root.Items.Count), SoundItem);
+            else if (!p.SoundModes && inPivot) Root.Items.Remove(SoundItem);
+
+            NoiseHead.Visibility = NcSummaryText.Visibility = Vis(p.SoundModes);
+            ExtrasPanel.Visibility = Vis(p.Extras);
+            for (int i = 4; i <= 5; i++) buttonBoxes[i].Visibility = Vis(p.TripleButtons);
+            Log("profile " + p.Model);
+        }
+
+        // A missing earbud reports 255, shown as "/".
+        static string BatText(int level)
+        {
+            return level < 0 || level > 5 ? "/" : level * 20 + "%";
+        }
+
         static int Clamp(int v, int lo, int hi)
         {
             return Math.Max(lo, Math.Min(hi, v));
@@ -255,7 +382,7 @@ namespace SCQ30Mobile
 
         void SetEqEnabled()
         {
-            bool custom = EqPresetBox.SelectedIndex <= 0;
+            bool custom = EqPresetBox.SelectedIndex <= 0 && (profile == null || profile.CustomEq);
             foreach (var s in eqSliders) s.IsEnabled = custom;
         }
 
@@ -276,6 +403,11 @@ namespace SCQ30Mobile
             int i = EqPresetBox.SelectedIndex;
             ushort id;
             int[] bands;
+            if (i <= 0 && profile != null && !profile.CustomEq)
+            {
+                StatusText.Text = "this model has no custom equalizer, pick a preset";
+                return;
+            }
             if (i <= 0)
             {
                 id = Protocol.CustomEqId;

@@ -5,12 +5,12 @@
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   IgnorableNamespaces="uap mp">
 
-  <Identity Name="SCQ30Mobile.0b7e5d52" Publisher="CN=samri" Version="1.0.0.2" />
+  <Identity Name="SCQ30Mobile.0b7e5d52" Publisher="CN=Royalturd" Version="0.0.0.1" />
   <mp:PhoneIdentity PhoneProductId="0b7e5d52-8c3a-4f3b-a1d4-5e6f7a8b9c01" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
 
   <Properties>
     <DisplayName>OpenSCQ30</DisplayName>
-    <PublisherDisplayName>samri</PublisherDisplayName>
+    <PublisherDisplayName>Royalturd</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -29,9 +29,9 @@
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
         Description="Soundcore headphone control using the OpenSCQ30 protocol."
-        BackgroundColor="#1B1B1B">
+        BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
-        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#1B1B1B" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#000000" />
       </uap:VisualElements>
     </Application>
   </Applications>

@@ -37,6 +37,20 @@ namespace SCQ30Mobile
         readonly System.Threading.SemaphoreSlim sendLock = new System.Threading.SemaphoreSlim(1, 1);
         readonly List<DualDevice> dualBuffer = new List<DualDevice>();
 
+        public static async Task<DeviceEntry> FindByIdAsync(string id)
+        {
+            try
+            {
+                var info = await DeviceInformation.CreateFromIdAsync(id);
+                return info == null ? null : new DeviceEntry { Info = info, Kind = "paired" };
+            }
+            catch (Exception ex)
+            {
+                Trace("saved device lookup failed: " + ex.Message);
+                return null;
+            }
+        }
+
         public static async Task<List<DeviceEntry>> FindDevicesAsync()
         {
             var list = new List<DeviceEntry>();

@@ -93,6 +93,8 @@
     <Compile Include="SoundcoreClient.cs" />
     <Compile Include="AppLog.cs" />
     <Compile Include="Protocol.cs" />
+    <Compile Include="Prefs.cs" />
+    <Compile Include="LiveTile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

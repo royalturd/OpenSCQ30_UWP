@@ -36,7 +36,10 @@
         </Style>
     </Page.Resources>
 
-    <Pivot Title="OPENSCQ30">
+    <Grid>
+    <MediaElement x:Name="Player" AutoPlay="False" Width="1" Height="1" Opacity="0" IsHitTestVisible="False"
+                  HorizontalAlignment="Left" VerticalAlignment="Top" />
+    <Pivot x:Name="Root" Title="OPENSCQ30" SelectionChanged="Root_SelectionChanged">
         <Pivot.TitleTemplate>
             <DataTemplate>
                 <TextBlock Text="{Binding}" FontSize="15" FontWeight="SemiBold" Margin="0,6,0,0" />
@@ -81,14 +84,16 @@
                     <TextBlock x:Name="SerialText" Style="{StaticResource Dim}" Text="–" />
                     <TextBlock Text="connection" Style="{StaticResource Head}" />
                     <TextBlock x:Name="TwsText" Style="{StaticResource Dim}" Text="–" />
-                    <TextBlock Text="noise" Style="{StaticResource Head}" />
+                    <TextBlock Text="model" Style="{StaticResource Head}" />
+                    <TextBlock x:Name="ModelText" Style="{StaticResource Dim}" Text="–" />
+                    <TextBlock x:Name="NoiseHead" Text="noise" Style="{StaticResource Head}" />
                     <TextBlock x:Name="NcSummaryText" Style="{StaticResource Dim}" Text="–" />
                     <Button Content="refresh" Style="{StaticResource Accent}" Click="Refresh_Click" />
                 </StackPanel>
             </ScrollViewer>
         </PivotItem>
 
-        <PivotItem Header="sound">
+        <PivotItem x:Name="SoundItem" Header="sound">
             <ScrollViewer>
                 <StackPanel>
                     <TextBlock Text="ambient sound mode" Style="{StaticResource Head}" Margin="0,0,0,4" />
@@ -133,9 +138,13 @@
         <PivotItem Header="more">
             <ScrollViewer>
                 <StackPanel>
+                    <ToggleSwitch x:Name="ConfirmSoundToggle" Header="confirmation sound" Toggled="ConfirmSound_Toggled" />
+                    <ToggleSwitch x:Name="AutoConnectToggle" Header="connect to last device on start" Toggled="AutoConnect_Toggled" />
+
                     <ToggleSwitch x:Name="TouchToggle" Header="touch tone" Toggled="Touch_Toggled" />
-                    <ToggleSwitch x:Name="SurroundToggle" Header="surround sound" Toggled="Surround_Toggled" />
                     <ToggleSwitch x:Name="GamingToggle" Header="gaming mode" Toggled="Gaming_Toggled" />
+                    <StackPanel x:Name="ExtrasPanel">
+                    <ToggleSwitch x:Name="SurroundToggle" Header="surround sound" Toggled="Surround_Toggled" />
                     <ToggleSwitch x:Name="LowBatToggle" Header="low battery prompt" Toggled="LowBat_Toggled" />
 
                     <TextBlock Text="auto power off" Style="{StaticResource Head}" />
@@ -150,6 +159,10 @@
                     <TextBlock Text="dual connections" Style="{StaticResource Head}" />
                     <ToggleSwitch x:Name="DualToggle" Header="enabled" Toggled="Dual_Toggled" />
                     <StackPanel x:Name="DualPanel" Margin="0,0,0,12" />
+                    </StackPanel>
+
+                    <TextBlock Text="made with ❤️ by Royalturd and Claude" Style="{StaticResource Dim}"
+                               HorizontalAlignment="Center" Margin="0,24,0,16" />
                 </StackPanel>
             </ScrollViewer>
         </PivotItem>
@@ -177,4 +190,5 @@
             </Grid>
         </PivotItem>
     </Pivot>
+    </Grid>
 </Page>

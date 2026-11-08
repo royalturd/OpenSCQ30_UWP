@@ -13,8 +13,30 @@ namespace SCQ30Mobile
         public string MacText { get { return BitConverter.ToString(Mac).Replace('-', ':'); } }
     }
 
+    // What a model can do. Detected from the serial number prefix, A3959 when unknown.
+    public class DeviceProfile
+    {
+        public string Model, Name;
+        public bool SoundModes, CustomEq, TripleButtons, Extras, GamingAlways;
+
+        public static readonly DeviceProfile A3959 = new DeviceProfile
+        {
+            Model = "A3959", Name = "Soundcore P30i / R50i NC",
+            SoundModes = true, CustomEq = true, TripleButtons = true, Extras = true, GamingAlways = false
+        };
+
+        // Same leading layout as A3959, but no noise canceling, 6 buttons, no custom EQ preset.
+        public static readonly DeviceProfile A3949 = new DeviceProfile
+        {
+            Model = "A3949", Name = "Soundcore P20i / P25i / R50i",
+            SoundModes = false, CustomEq = false, TripleButtons = false, Extras = false, GamingAlways = true
+        };
+    }
+
     public class DeviceState
     {
+        public DeviceProfile Profile = DeviceProfile.A3959;
+        public byte[] Raw;                           // state body as received, cached for offline display
         public byte HostDevice;
         public bool TwsConnected;
         public int BatteryLeft, BatteryRight;
@@ -122,10 +144,41 @@ namespace SCQ30Mobile
             return a > major || (a == major && c >= minor);
         }
 
+        // A3949 body: same bytes 0..43 as A3959, then 11 unknown, 6 x (enabled, action) at 55,
+        // 4 unknown, gaming mode at 71, touch tone at 72. Layout from OpenSCQ30 test packets.
+        static DeviceState ParseA3949(byte[] b)
+        {
+            var s = new DeviceState();
+            s.Profile = DeviceProfile.A3949;
+            s.Raw = b;
+            s.HostDevice = b[0];
+            s.TwsConnected = b[1] != 0;
+            s.BatteryLeft = b[2];
+            s.BatteryRight = b[3];
+            s.ChargingLeft = b[4] == 1;
+            s.ChargingRight = b[5] == 1;
+            s.FirmwareLeft = Ascii(b, 6, 5);
+            s.FirmwareRight = Ascii(b, 11, 5);
+            s.Serial = Ascii(b, 16, 16);
+            s.EqPresetId = (ushort)(b[32] | (b[33] << 8));
+            for (int i = 0; i < 10; i++) s.EqBands[i] = b[34 + i] - 120;
+            // device buttons: left single, right single, left double, right double, left long, right long
+            // app slots:      0, 1, 2, 3, 6, 7 (slots 4 and 5 are triple press, unused here)
+            int[] slot = { 0, 1, 2, 3, 6, 7 };
+            for (int i = 0; i < 8; i++) s.Buttons[i] = 0xFF;
+            for (int i = 0; i < 6; i++) s.Buttons[slot[i]] = b[56 + i * 2];
+            s.GamingMode = b[71] != 0;
+            s.TouchTone = b[72] != 0;
+            s.GamingModeSupported = true;
+            return s;
+        }
+
         public static DeviceState ParseState(byte[] b)
         {
+            if (b.Length >= 73 && Ascii(b, 16, 4) == "3949") return ParseA3949(b);
             if (b.Length < 79) return null;
             var s = new DeviceState();
+            s.Raw = b;
             s.HostDevice = b[0];
             s.TwsConnected = b[1] != 0;
             s.BatteryLeft = b[2];
