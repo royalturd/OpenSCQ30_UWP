@@ -10,7 +10,7 @@ This project is not affiliated with Soundcore, Anker or the original OpenSCQ30 p
 
 ### Supported Platforms
 
-[ ] Windows Phone 8.1 (ARM) - Not yet tested on hardware  
+[x] Windows Phone 8.1 (ARM) - Connects on real hardware  
 [x] Windows 10 Mobile (ARM) - Working on real hardware (`main` branch)
 
 Target: Windows Phone 8.1 (OS 6.3.1).
