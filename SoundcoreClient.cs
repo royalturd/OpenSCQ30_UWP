@@ -12,6 +12,8 @@ namespace SCQ30Mobile
     public class DeviceEntry
     {
         public DeviceInformation Info;
+        // Every RFCOMM service found for this device, in the order they are tried.
+        public readonly List<DeviceInformation> Services = new List<DeviceInformation>();
         public string Name { get { return Info.Name; } }
         public string Kind;
         public override string ToString() { return Info.Name; }
@@ -26,6 +28,8 @@ namespace SCQ30Mobile
         public event Action<DeviceState> StateChanged;
         public event Action<List<DualDevice>> DualDevicesChanged;
         public DeviceState State { get; private set; }
+        // Id of the RFCOMM service that answered, saved for reconnecting on the next start.
+        public string ConnectedId { get; private set; }
 
         StreamSocket socket;
         DataWriter writer;
@@ -51,8 +55,9 @@ namespace SCQ30Mobile
         }
 
         // Windows Phone 8.1 has no BluetoothDevice class, so devices are found through their RFCOMM
-        // services. Each UUID must also be listed in Package.appxmanifest. Vendor UUIDs come first,
-        // the same choice OpenSCQ30 makes: Soundcore vendor service if the device has one, else plain SPP.
+        // services. Each UUID must also be listed in Package.appxmanifest. A device can expose more
+        // than one of them and only one answers, so ConnectAsync tries them in this order:
+        // Soundcore vendor services first, the same preference OpenSCQ30 has, then plain SPP.
         static readonly Guid[] ServiceUuids =
         {
             new Guid("0cf12d31-fac3-4553-bd80-d6832e7b3959"),
@@ -64,7 +69,7 @@ namespace SCQ30Mobile
         public static async Task<List<DeviceEntry>> FindDevicesAsync()
         {
             var list = new List<DeviceEntry>();
-            var seen = new HashSet<string>();
+            var byName = new Dictionary<string, DeviceEntry>();
             foreach (var uuid in ServiceUuids)
             {
                 var selector = RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(uuid));
@@ -72,18 +77,44 @@ namespace SCQ30Mobile
                 foreach (var d in found)
                 {
                     Trace("found " + d.Name + " service " + uuid + " " + d.Id);
-                    // One entry per device: the first (most specific) service wins.
-                    if (!seen.Add(d.Name)) continue;
-                    list.Add(new DeviceEntry { Info = d, Kind = uuid == RfcommServiceId.SerialPort.Uuid ? "spp" : "vendor" });
+                    DeviceEntry entry;
+                    if (!byName.TryGetValue(d.Name, out entry))
+                    {
+                        entry = new DeviceEntry { Info = d, Kind = "paired" };
+                        byName[d.Name] = entry;
+                        list.Add(entry);
+                    }
+                    entry.Services.Add(d);
                 }
             }
             return list;
         }
 
+        // Tries each service the device has until one answers the state request.
         public async Task ConnectAsync(DeviceEntry entry)
         {
-            Trace("connect " + entry + " (" + entry.Kind + ")");
-            service = await RfcommDeviceService.FromIdAsync(entry.Info.Id);
+            var candidates = entry.Services.Count > 0 ? entry.Services : new List<DeviceInformation> { entry.Info };
+            Trace("connect " + entry + ", " + candidates.Count + " service(s) to try");
+            foreach (var info in candidates)
+            {
+                try
+                {
+                    if (await TryServiceAsync(info))
+                    {
+                        ConnectedId = info.Id;
+                        return;
+                    }
+                    Trace("no response in 3s from " + service.ServiceId.Uuid + ", trying the next service");
+                }
+                catch (Exception ex) { Trace("service failed: " + ex.Message); }
+                Close();
+            }
+            throw new InvalidOperationException("No service answered: wrong service or protocol (see log)");
+        }
+
+        async Task<bool> TryServiceAsync(DeviceInformation info)
+        {
+            service = await RfcommDeviceService.FromIdAsync(info.Id);
             if (service == null) throw new InvalidOperationException("RFCOMM service not available (is the device on and paired?)");
             Trace("using " + service.ServiceId.Uuid);
             Trace("service " + service.ConnectionHostName + " " + service.ConnectionServiceName);
@@ -94,17 +125,14 @@ namespace SCQ30Mobile
 
             writer = new DataWriter(socket.OutputStream);
             reader = new DataReader(socket.InputStream);
+            rxCount = 0;
             running = true;
             Trace("socket connected");
             var ignore = ReadLoopAsync();
             await RequestStateAsync();
-            var watchdog = WatchdogAsync();
-        }
 
-        async Task WatchdogAsync()
-        {
-            await Task.Delay(5000);
-            if (running && rxCount == 0) Trace("no response in 5s: wrong service or protocol");
+            for (int i = 0; i < 30 && rxCount == 0; i++) await Task.Delay(100);
+            return rxCount > 0;
         }
 
         public Task RequestStateAsync()
@@ -277,6 +305,11 @@ namespace SCQ30Mobile
         }
 
         public void Dispose()
+        {
+            Close();
+        }
+
+        void Close()
         {
             running = false;
             if (reader != null) { reader.Dispose(); reader = null; }

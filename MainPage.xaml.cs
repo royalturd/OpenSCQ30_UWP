@@ -266,7 +266,7 @@ namespace SCQ30Mobile
                 client.DualDevicesChanged += d => Ui(() => ShowDual(d));
                 StatusText.Text = "connecting…";
                 await client.ConnectAsync(entry);
-                Prefs.SetString("lastDevice", entry.Info.Id);
+                Prefs.SetString("lastDevice", client.ConnectedId);
                 StatusText.Text = "connected, waiting for state";
             }
             catch (Exception ex)
