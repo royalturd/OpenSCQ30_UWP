@@ -1,11 +1,14 @@
-<Page
-    x:Class="SCQ30Mobile.MainPage"
+<Grid
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="Black">
 
+    <!-- Loaded at runtime by MainPage.InitializeComponent through XamlReader.Load, so the app builds
+         without the Windows Phone 8.1 XAML compiler. That means: no x:Class and no event attributes
+         here. Events are wired in MainPage.Ui.cs; every element the code uses needs an x:Name. -->
+
     <!-- Windows Phone 8.1 look: black canvas, big light lowercase pivot headers, outlined buttons, accent section titles. -->
-    <Page.Resources>
+    <Grid.Resources>
         <Style x:Key="Head" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI" />
             <Setter Property="FontSize" Value="20" />
@@ -34,12 +37,11 @@
         <Style TargetType="PivotItem">
             <Setter Property="Margin" Value="7,0,7,0" />
         </Style>
-    </Page.Resources>
+    </Grid.Resources>
 
-    <Grid>
     <MediaElement x:Name="Player" AutoPlay="False" Width="1" Height="1" Opacity="0" IsHitTestVisible="False"
                   HorizontalAlignment="Left" VerticalAlignment="Top" />
-    <Pivot x:Name="Root" Title="OPENSCQ30" SelectionChanged="Root_SelectionChanged">
+    <Pivot x:Name="Root" Title="OPENSCQ30">
         <Pivot.TitleTemplate>
             <DataTemplate>
                 <TextBlock Text="{Binding}" FontSize="15" FontWeight="SemiBold" Margin="0,6,0,0" />
@@ -58,7 +60,7 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Button x:Name="ScanButton" Content="scan paired devices" Style="{StaticResource Accent}" Margin="0,0,0,8" Click="Scan_Click" />
+                <Button x:Name="ScanButton" Content="scan paired devices" Style="{StaticResource Accent}" Margin="0,0,0,8" />
                 <ListView x:Name="DeviceList" Grid.Row="1" SelectionMode="Single">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -67,7 +69,7 @@
                     </ListView.ItemTemplate>
                 </ListView>
                 <StackPanel Grid.Row="2" Margin="0,8,0,12">
-                    <Button x:Name="ConnectButton" Content="connect" Style="{StaticResource Accent}" Margin="0,0,0,8" Click="Connect_Click" />
+                    <Button x:Name="ConnectButton" Content="connect" Style="{StaticResource Accent}" Margin="0,0,0,8" />
                     <TextBlock x:Name="StatusText" Text="pair the device in Settings first" Style="{StaticResource Dim}" />
                 </StackPanel>
             </Grid>
@@ -88,7 +90,7 @@
                     <TextBlock x:Name="ModelText" Style="{StaticResource Dim}" Text="–" />
                     <TextBlock x:Name="NoiseHead" Text="noise" Style="{StaticResource Head}" />
                     <TextBlock x:Name="NcSummaryText" Style="{StaticResource Dim}" Text="–" />
-                    <Button Content="refresh" Style="{StaticResource Accent}" Click="Refresh_Click" />
+                    <Button x:Name="RefreshButton" Content="refresh" Style="{StaticResource Accent}" />
                 </StackPanel>
             </ScrollViewer>
         </PivotItem>
@@ -110,7 +112,7 @@
                     <TextBlock Text="wind noise" Style="{StaticResource Head}" />
                     <ToggleSwitch x:Name="WindToggle" Header="suppression" />
                     <TextBlock x:Name="WindInfo" Style="{StaticResource Dim}" Text="wind detected –" />
-                    <Button Content="apply" Style="{StaticResource Accent}" Margin="0,16,0,12" Click="ApplySound_Click" />
+                    <Button x:Name="ApplySoundButton" Content="apply" Style="{StaticResource Accent}" Margin="0,16,0,12" />
                 </StackPanel>
             </ScrollViewer>
         </PivotItem>
@@ -119,9 +121,9 @@
             <ScrollViewer>
                 <StackPanel>
                     <TextBlock Text="preset" Style="{StaticResource Head}" Margin="0,0,0,4" />
-                    <ComboBox x:Name="EqPresetBox" HorizontalAlignment="Stretch" SelectionChanged="EqPreset_Changed" />
+                    <ComboBox x:Name="EqPresetBox" HorizontalAlignment="Stretch" />
                     <StackPanel x:Name="EqPanel" Margin="0,12,0,0" />
-                    <Button Content="apply" Style="{StaticResource Accent}" Margin="0,16,0,12" Click="ApplyEq_Click" />
+                    <Button x:Name="ApplyEqButton" Content="apply" Style="{StaticResource Accent}" Margin="0,16,0,12" />
                 </StackPanel>
             </ScrollViewer>
         </PivotItem>
@@ -130,7 +132,7 @@
             <ScrollViewer>
                 <StackPanel>
                     <StackPanel x:Name="ButtonsPanel" />
-                    <Button Content="reset to default" Style="{StaticResource Accent}" Margin="0,16,0,12" Click="ResetButtons_Click" />
+                    <Button x:Name="ResetButtonsButton" Content="reset to default" Style="{StaticResource Accent}" Margin="0,16,0,12" />
                 </StackPanel>
             </ScrollViewer>
         </PivotItem>
@@ -138,26 +140,26 @@
         <PivotItem Header="more">
             <ScrollViewer>
                 <StackPanel>
-                    <ToggleSwitch x:Name="ConfirmSoundToggle" Header="confirmation sound" Toggled="ConfirmSound_Toggled" />
-                    <ToggleSwitch x:Name="AutoConnectToggle" Header="connect to last device on start" Toggled="AutoConnect_Toggled" />
+                    <ToggleSwitch x:Name="ConfirmSoundToggle" Header="confirmation sound" />
+                    <ToggleSwitch x:Name="AutoConnectToggle" Header="connect to last device on start" />
 
-                    <ToggleSwitch x:Name="TouchToggle" Header="touch tone" Toggled="Touch_Toggled" />
-                    <ToggleSwitch x:Name="GamingToggle" Header="gaming mode" Toggled="Gaming_Toggled" />
+                    <ToggleSwitch x:Name="TouchToggle" Header="touch tone" />
+                    <ToggleSwitch x:Name="GamingToggle" Header="gaming mode" />
                     <StackPanel x:Name="ExtrasPanel">
-                    <ToggleSwitch x:Name="SurroundToggle" Header="surround sound" Toggled="Surround_Toggled" />
-                    <ToggleSwitch x:Name="LowBatToggle" Header="low battery prompt" Toggled="LowBat_Toggled" />
+                    <ToggleSwitch x:Name="SurroundToggle" Header="surround sound" />
+                    <ToggleSwitch x:Name="LowBatToggle" Header="low battery prompt" />
 
                     <TextBlock Text="auto power off" Style="{StaticResource Head}" />
-                    <ToggleSwitch x:Name="ApoToggle" Header="enabled" Toggled="Apo_Toggled" />
-                    <ComboBox x:Name="ApoBox" HorizontalAlignment="Stretch" SelectionChanged="Apo_Selected" />
+                    <ToggleSwitch x:Name="ApoToggle" Header="enabled" />
+                    <ComboBox x:Name="ApoBox" HorizontalAlignment="Stretch" />
 
                     <TextBlock Text="ambient button cycle" Style="{StaticResource Head}" />
-                    <CheckBox x:Name="CycleNc" Content="noise canceling" Click="Cycle_Click" />
-                    <CheckBox x:Name="CycleTr" Content="transparency" Click="Cycle_Click" />
-                    <CheckBox x:Name="CycleNormal" Content="normal" Click="Cycle_Click" />
+                    <CheckBox x:Name="CycleNc" Content="noise canceling" />
+                    <CheckBox x:Name="CycleTr" Content="transparency" />
+                    <CheckBox x:Name="CycleNormal" Content="normal" />
 
                     <TextBlock Text="dual connections" Style="{StaticResource Head}" />
-                    <ToggleSwitch x:Name="DualToggle" Header="enabled" Toggled="Dual_Toggled" />
+                    <ToggleSwitch x:Name="DualToggle" Header="enabled" />
                     <StackPanel x:Name="DualPanel" Margin="0,0,0,12" />
                     </StackPanel>
 
@@ -179,9 +181,9 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Content="share" Style="{StaticResource Accent}" Margin="0,0,4,0" Click="CopyLog_Click" />
-                    <Button Grid.Column="1" Content="export" Style="{StaticResource Accent}" Margin="4,0" Click="ExportLog_Click" />
-                    <Button Grid.Column="2" Content="clear" Style="{StaticResource Accent}" Margin="4,0,0,0" Click="ClearLog_Click" />
+                    <Button x:Name="ShareLogButton" Content="share" Style="{StaticResource Accent}" Margin="0,0,4,0" />
+                    <Button x:Name="ExportLogButton" Grid.Column="1" Content="export" Style="{StaticResource Accent}" Margin="4,0" />
+                    <Button x:Name="ClearLogButton" Grid.Column="2" Content="clear" Style="{StaticResource Accent}" Margin="4,0,0,0" />
                 </Grid>
                 <ScrollViewer x:Name="LogScroll" Grid.Row="1">
                     <TextBlock x:Name="LogText" FontFamily="Consolas" FontSize="11" Foreground="#FF999999"
@@ -190,5 +192,4 @@
             </Grid>
         </PivotItem>
     </Pivot>
-    </Grid>
-</Page>
+</Grid>

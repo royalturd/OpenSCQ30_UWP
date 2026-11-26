@@ -13,7 +13,25 @@ This project is not affiliated with Soundcore, Anker or the original OpenSCQ30 p
 [ ] Windows Phone 8.1 (ARM) - Not yet tested on hardware  
 [x] Windows 10 Mobile (ARM) - Working on real hardware (`main` branch)
 
-Target: Windows Phone 8.1 (OS 6.3.1). Building needs Visual Studio 2015 with the Windows Phone 8.1 tools; Visual Studio 2017 and later cannot build Windows Phone 8.1 projects.
+Target: Windows Phone 8.1 (OS 6.3.1).
+
+### Building
+
+Visual Studio 2017 and later cannot build Windows Phone 8.1 projects, so this branch builds without the XAML compiler: `MainPage.xaml` is embedded in the app and loaded at runtime with `XamlReader.Load`. `build.ps1` compiles with the C# compiler from any recent Visual Studio and packages with the SDK tools.
+
+Requirements: Visual Studio 2017 or later (any edition, for `csc.exe`), the Windows Phone 8.1 SDK, the Windows 8.1 SDK and a Windows 10 SDK.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File build.ps1
+```
+
+This writes `out\SCQ30Mobile_wp81.appx`, signed with a self-signed `CN=Royalturd` certificate that the script creates on first run. The phone must be developer unlocked. To deploy over USB:
+
+```powershell
+& "${env:ProgramFiles(x86)}\Microsoft SDKs\Windows Phone8.1\Tools\AppDeploy\AppDeployCmd.exe" /installlaunch out\SCQ30Mobile_wp81.appx /targetdevice:de
+```
+
+`SCQ30Mobile.csproj` still opens in Visual Studio 2015 with the Windows Phone 8.1 tools.
 
 Differences from the Windows 10 Mobile version:
 
@@ -21,6 +39,7 @@ Differences from the Windows 10 Mobile version:
 - The live tile uses the Windows Phone 8.1 text templates (medium and wide).
 - The log `share` button opens the share UI, because Windows Phone 8.1 has no clipboard API.
 - The log header shows the phone model, not the OS build number.
+- The page is loaded at runtime from `MainPage.xaml`, and event handlers are attached in `MainPage.Ui.cs`.
 
 ### Supported Devices
 

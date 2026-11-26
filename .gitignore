@@ -5,3 +5,4 @@ AppPackages/
 *.pfx
 *.user
 BundleArtifacts/
+out/

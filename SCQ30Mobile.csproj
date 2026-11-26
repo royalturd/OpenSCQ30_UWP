@@ -62,8 +62,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="App.xaml.cs"><DependentUpon>App.xaml</DependentUpon></Compile>
+    <Compile Include="App.cs" />
     <Compile Include="MainPage.xaml.cs"><DependentUpon>MainPage.xaml</DependentUpon></Compile>
+    <Compile Include="MainPage.Ui.cs"><DependentUpon>MainPage.xaml</DependentUpon></Compile>
     <Compile Include="SoundcoreClient.cs" />
     <Compile Include="AppLog.cs" />
     <Compile Include="Protocol.cs" />
@@ -83,8 +84,8 @@
     <Content Include="Assets\SplashScreen.png" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></ApplicationDefinition>
-    <Page Include="MainPage.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page>
+    <!-- Loaded at runtime with XamlReader.Load, not compiled. See MainPage.Ui.cs. -->
+    <EmbeddedResource Include="MainPage.xaml"><LogicalName>SCQ30Mobile.MainPage.xaml</LogicalName></EmbeddedResource>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '12.0' ">
     <VisualStudioVersion>12.0</VisualStudioVersion>
