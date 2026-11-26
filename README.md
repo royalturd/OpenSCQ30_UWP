@@ -28,7 +28,7 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 This writes `out\SCQ30Mobile_wp81.appx`, signed with a self-signed `CN=Royalturd` certificate that the script creates on first run. The phone must be developer unlocked. To deploy over USB:
 
 ```powershell
-& "${env:ProgramFiles(x86)}\Microsoft SDKs\Windows Phone8.1\Tools\AppDeploy\AppDeployCmd.exe" /installlaunch out\SCQ30Mobile_wp81.appx /targetdevice:de
+& "${env:ProgramFiles(x86)}\Microsoft SDKs\Windows Phone\v8.1\Tools\AppDeploy\AppDeployCmd.exe" /installlaunch out\SCQ30Mobile_wp81.appx /targetdevice:de
 ```
 
 `SCQ30Mobile.csproj` still opens in Visual Studio 2015 with the Windows Phone 8.1 tools.
