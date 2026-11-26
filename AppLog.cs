@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Windows.System.Profile;
+using Windows.Security.ExchangeActiveSyncProvisioning;
 
 namespace SCQ30Mobile
 {
@@ -33,14 +33,15 @@ namespace SCQ30Mobile
         {
             get
             {
+                // Windows Phone 8.1 does not expose the OS build number, only the OS and phone model.
                 string os = "?";
                 try
                 {
-                    ulong v = ulong.Parse(AnalyticsInfo.VersionInfo.DeviceFamilyVersion);
-                    os = ((v >> 48) & 0xFFFF) + "." + ((v >> 32) & 0xFFFF) + "." + ((v >> 16) & 0xFFFF) + "." + (v & 0xFFFF);
+                    var d = new EasClientDeviceInformation();
+                    os = d.OperatingSystem + " on " + d.SystemManufacturer + " " + d.SystemProductName;
                 }
                 catch (Exception) { }
-                return "OpenSCQ30 log\nOS " + os + " (" + AnalyticsInfo.VersionInfo.DeviceFamily + ")\n"
+                return "OpenSCQ30 log\nOS " + os + "\n"
                      + "Exported " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\n\n" + Text + "\n";
             }
         }

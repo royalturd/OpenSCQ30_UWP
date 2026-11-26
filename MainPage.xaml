@@ -9,7 +9,7 @@
         <Style x:Key="Head" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI" />
             <Setter Property="FontSize" Value="20" />
-            <Setter Property="Foreground" Value="{ThemeResource SystemControlHighlightAccentBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource PhoneAccentBrush}" />
             <Setter Property="Margin" Value="0,18,0,4" />
         </Style>
         <Style x:Key="Dim" TargetType="TextBlock">
@@ -179,7 +179,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Content="copy" Style="{StaticResource Accent}" Margin="0,0,4,0" Click="CopyLog_Click" />
+                    <Button Content="share" Style="{StaticResource Accent}" Margin="0,0,4,0" Click="CopyLog_Click" />
                     <Button Grid.Column="1" Content="export" Style="{StaticResource Accent}" Margin="4,0" Click="ExportLog_Click" />
                     <Button Grid.Column="2" Content="clear" Style="{StaticResource Accent}" Margin="4,0,0,0" Click="ClearLog_Click" />
                 </Grid>

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Rfcomm;
 using Windows.Devices.Enumeration;
 using Windows.Networking.Sockets;
@@ -51,38 +50,41 @@ namespace SCQ30Mobile
             }
         }
 
+        // Windows Phone 8.1 has no BluetoothDevice class, so devices are found through their RFCOMM
+        // services. Each UUID must also be listed in Package.appxmanifest. Vendor UUIDs come first,
+        // the same choice OpenSCQ30 makes: Soundcore vendor service if the device has one, else plain SPP.
+        static readonly Guid[] ServiceUuids =
+        {
+            new Guid("0cf12d31-fac3-4553-bd80-d6832e7b3959"),
+            new Guid("0cf12d31-fac3-4553-bd80-d6832e7b3949"),
+            VendorUuid,
+            RfcommServiceId.SerialPort.Uuid,
+        };
+
         public static async Task<List<DeviceEntry>> FindDevicesAsync()
         {
             var list = new List<DeviceEntry>();
-            var found = await DeviceInformation.FindAllAsync(BluetoothDevice.GetDeviceSelectorFromPairingState(true));
-            foreach (var d in found)
+            var seen = new HashSet<string>();
+            foreach (var uuid in ServiceUuids)
             {
-                Trace("found " + d.Name + " " + d.Id);
-                list.Add(new DeviceEntry { Info = d, Kind = "paired" });
+                var selector = RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(uuid));
+                var found = await DeviceInformation.FindAllAsync(selector);
+                foreach (var d in found)
+                {
+                    Trace("found " + d.Name + " service " + uuid + " " + d.Id);
+                    // One entry per device: the first (most specific) service wins.
+                    if (!seen.Add(d.Name)) continue;
+                    list.Add(new DeviceEntry { Info = d, Kind = uuid == RfcommServiceId.SerialPort.Uuid ? "spp" : "vendor" });
+                }
             }
             return list;
         }
 
-        // Same choice OpenSCQ30 makes: Soundcore vendor service if the device has one, else plain SPP.
-        static bool IsVendorUuid(Guid g)
-        {
-            return g.ToString().StartsWith("0cf12d31-fac3-4553-bd80-d6832e7", StringComparison.OrdinalIgnoreCase);
-        }
-
         public async Task ConnectAsync(DeviceEntry entry)
         {
-            Trace("connect " + entry);
-            var dev = await BluetoothDevice.FromIdAsync(entry.Info.Id);
-            if (dev == null) throw new InvalidOperationException("Device not found");
-            Trace("device " + dev.Name + " " + dev.ConnectionStatus);
-
-            var res = await dev.GetRfcommServicesAsync(BluetoothCacheMode.Uncached);
-            Trace("services error=" + res.Error + " count=" + res.Services.Count);
-            foreach (var s in res.Services) Trace("  service " + s.ServiceId.Uuid);
-
-            service = res.Services.FirstOrDefault(s => IsVendorUuid(s.ServiceId.Uuid))
-                      ?? res.Services.FirstOrDefault(s => s.ServiceId.Uuid == RfcommServiceId.SerialPort.Uuid);
-            if (service == null) throw new InvalidOperationException("No usable RFCOMM service (see log)");
+            Trace("connect " + entry + " (" + entry.Kind + ")");
+            service = await RfcommDeviceService.FromIdAsync(entry.Info.Id);
+            if (service == null) throw new InvalidOperationException("RFCOMM service not available (is the device on and paired?)");
             Trace("using " + service.ServiceId.Uuid);
             Trace("service " + service.ConnectionHostName + " " + service.ConnectionServiceName);
 
@@ -280,7 +282,8 @@ namespace SCQ30Mobile
             if (reader != null) { reader.Dispose(); reader = null; }
             if (writer != null) { writer.Dispose(); writer = null; }
             if (socket != null) { socket.Dispose(); socket = null; }
-            if (service != null) { service.Dispose(); service = null; }
+            // RfcommDeviceService is not disposable on Windows Phone 8.1; closing the socket is enough.
+            service = null;
         }
     }
 }

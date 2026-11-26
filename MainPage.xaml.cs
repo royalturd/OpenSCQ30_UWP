@@ -31,6 +31,7 @@ namespace SCQ30Mobile
                 LogScroll.ChangeView(null, LogScroll.ScrollableHeight, null);
             });
             AppLog.Add("app started");
+            DataTransferManager.GetForCurrentView().DataRequested += OnShareRequested;
             BuildControls();
             RestorePrefs();
             StartSync();
@@ -183,22 +184,38 @@ namespace SCQ30Mobile
 
         // ---- log ----
 
+        // Windows Phone 8.1 has no clipboard API, so the log goes through the share UI instead
+        // (email, OneNote, messaging and so on).
         void CopyLog_Click(object sender, RoutedEventArgs e)
         {
-            var pkg = new DataPackage();
-            pkg.SetText(AppLog.Report);
-            Clipboard.SetContent(pkg);
-            Log("log copied to clipboard");
+            DataTransferManager.ShowShareUI();
         }
 
-        async void ExportLog_Click(object sender, RoutedEventArgs e)
+        void OnShareRequested(DataTransferManager sender, DataRequestedEventArgs e)
+        {
+            e.Request.Data.Properties.Title = "OpenSCQ30 log";
+            e.Request.Data.SetText(AppLog.Report);
+            Log("log shared");
+        }
+
+        // Windows Phone 8.1 suspends the app while the picker is open and reports the file
+        // through App.OnActivated, which calls ContinueExportAsync.
+        void ExportLog_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 var picker = new FileSavePicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary, SuggestedFileName = "scq30-log" };
                 picker.FileTypeChoices.Add("Text", new List<string> { ".txt" });
-                var file = await picker.PickSaveFileAsync();
-                if (file == null) return;
+                picker.PickSaveFileAndContinue();
+            }
+            catch (Exception ex) { Log("export failed: " + ex.Message); }
+        }
+
+        public async Task ContinueExportAsync(StorageFile file)
+        {
+            if (file == null) return;
+            try
+            {
                 await FileIO.WriteTextAsync(file, AppLog.Report);
                 Log("log exported to " + file.Path);
             }

@@ -1,17 +1,26 @@
-# OpenSCQ30 for Windows 10 Mobile
+# OpenSCQ30 for Windows Phone 8.1
 
 ## About
 
-OpenSCQ30 for Windows 10 Mobile is free software for controlling settings for Soundcore headphones and earbuds from a Windows 10 Mobile phone. It is a port of the protocol work in [OpenSCQ30](https://github.com/Oppzippy/OpenSCQ30) by Oppzippy, written as a native UWP app because the original project has no Windows 10 Mobile build.
+OpenSCQ30 for Windows Phone 8.1 is free software for controlling settings for Soundcore headphones and earbuds from a Windows Phone 8.1 phone. It is a port of the protocol work in [OpenSCQ30](https://github.com/Oppzippy/OpenSCQ30) by Oppzippy, written as a native Windows Phone Store app because the original project has no Windows Phone build.
+
+This is the `wp81` branch. The Windows 10 Mobile (UWP) version lives on `main`.
 
 This project is not affiliated with Soundcore, Anker or the original OpenSCQ30 project. It reuses the original project's name, icon and protocol documentation, and it is licensed under GPL-3.0 like the original.
 
 ### Supported Platforms
 
-[x] Windows 10 Mobile (ARM) - Working on real hardware  
-[ ] Windows 10 desktop (x86 / x64) - Not built or tested
+[ ] Windows Phone 8.1 (ARM) - Not yet tested on hardware  
+[x] Windows 10 Mobile (ARM) - Working on real hardware (`main` branch)
 
-Target: Windows 10 build 10240 or newer. Developed for a Lumia 950 on build 15254 (version 1709).
+Target: Windows Phone 8.1 (OS 6.3.1). Building needs Visual Studio 2015 with the Windows Phone 8.1 tools; Visual Studio 2017 and later cannot build Windows Phone 8.1 projects.
+
+Differences from the Windows 10 Mobile version:
+
+- Devices are found through their RFCOMM services, because Windows Phone 8.1 has no `BluetoothDevice` class.
+- The live tile uses the Windows Phone 8.1 text templates (medium and wide).
+- The log `share` button opens the share UI, because Windows Phone 8.1 has no clipboard API.
+- The log header shows the phone model, not the OS build number.
 
 ### Supported Devices
 

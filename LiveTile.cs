@@ -16,13 +16,14 @@ namespace SCQ30Mobile
                                  "  R " + Percent(s.BatteryRight) + (s.ChargingRight ? "⚡" : "");
                 string mode = ModeText(s);
                 string low = LowText(s);
-                if (low != null) mode += "\n⚠ " + low;
+                string warn = low == null ? "" : "⚠ " + low;
 
+                // Windows Phone 8.1 has no adaptive tiles, so this uses the 8.1 text templates
+                // (medium and wide; phones have no large tile).
                 string xml =
-                    "<tile><visual branding='name' displayName='OpenSCQ30'>" +
-                    Binding("TileMedium", name, battery, mode) +
-                    Binding("TileWide", name, battery, mode) +
-                    Binding("TileLarge", name, battery, mode) +
+                    "<tile><visual version='2' branding='name'>" +
+                    Binding("TileSquare150x150Text01", name, battery, mode, warn) +
+                    Binding("TileWide310x150Text01", name, battery, mode, warn) +
                     "</visual></tile>";
 
                 var doc = new XmlDocument();
@@ -62,9 +63,9 @@ namespace SCQ30Mobile
             lastNotified = low;
 
             string xml =
-                "<toast><visual><binding template='ToastGeneric'>" +
-                "<text>Low battery</text>" +
-                "<text>" + Esc(name) + ": " + Esc(low.Substring("low battery: ".Length)) + "</text>" +
+                "<toast><visual><binding template='ToastText02'>" +
+                "<text id='1'>Low battery</text>" +
+                "<text id='2'>" + Esc(name) + ": " + Esc(low.Substring("low battery: ".Length)) + "</text>" +
                 "</binding></visual></toast>";
             var doc = new XmlDocument();
             doc.LoadXml(xml);
@@ -94,12 +95,14 @@ namespace SCQ30Mobile
             return m;
         }
 
-        static string Binding(string template, string name, string battery, string mode)
+        // Text01 templates: one heading line (id 1) and body lines (id 2 and up).
+        static string Binding(string template, string name, string battery, string mode, string warn)
         {
             return "<binding template='" + template + "'>" +
-                   "<text hint-style='base'>" + Esc(name) + "</text>" +
-                   "<text hint-style='captionSubtle' hint-wrap='true'>" + Esc(battery) + "</text>" +
-                   "<text hint-style='captionSubtle' hint-wrap='true'>" + Esc(mode) + "</text>" +
+                   "<text id='1'>" + Esc(name) + "</text>" +
+                   "<text id='2'>" + Esc(battery) + "</text>" +
+                   "<text id='3'>" + Esc(mode) + "</text>" +
+                   "<text id='4'>" + Esc(warn) + "</text>" +
                    "</binding>";
         }
 
